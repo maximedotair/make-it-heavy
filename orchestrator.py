@@ -68,7 +68,7 @@ class TaskOrchestrator:
             if result is not None:
                 self.agent_results[agent_id] = result
     
-    def run_agent_parallel(self, agent_id: int, subtask: str) -> Dict[str, Any]:
+    def run_agent_parallel(self, agent_id: int, subtask: str, tool_callback=None) -> Dict[str, Any]:
         """
         Run a single agent with the given subtask.
         Returns result dictionary with agent_id, status, and response.
@@ -76,8 +76,8 @@ class TaskOrchestrator:
         try:
             self.update_agent_progress(agent_id, "PROCESSING...")
             
-            # Use simple agent like in main.py
-            agent = OpenRouterAgent(silent=True)
+            # Use simple agent like in main.py, pass tool_callback
+            agent = OpenRouterAgent(silent=True, tool_callback=tool_callback)
             
             start_time = time.time()
             response = agent.run(subtask)
@@ -167,7 +167,7 @@ class TaskOrchestrator:
         with self.progress_lock:
             return self.agent_progress.copy()
     
-    def orchestrate(self, user_input: str):
+    def orchestrate(self, user_input: str, tool_callback=None):
         """
         Main orchestration method.
         Takes user input, delegates to parallel agents, and returns aggregated result.
@@ -188,9 +188,9 @@ class TaskOrchestrator:
         agent_results = []
         
         with ThreadPoolExecutor(max_workers=self.num_agents) as executor:
-            # Submit all agent tasks
+            # Submit all agent tasks with tool_callback
             future_to_agent = {
-                executor.submit(self.run_agent_parallel, i, subtasks[i]): i 
+                executor.submit(self.run_agent_parallel, i, subtasks[i], tool_callback): i
                 for i in range(self.num_agents)
             }
             

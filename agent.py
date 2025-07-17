@@ -4,13 +4,15 @@ from openai import OpenAI
 from tools import discover_tools
 
 class OpenRouterAgent:
-    def __init__(self, config_path="config.yaml", silent=False):
+    def __init__(self, config_path="config.yaml", silent=False, tool_callback=None):
         # Load configuration
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
         
         # Silent mode for orchestrator (suppresses debug output)
         self.silent = silent
+        # Callback function for tool usage notifications
+        self.tool_callback = tool_callback
         
         # Initialize OpenAI client with OpenRouter
         self.client = OpenAI(
@@ -47,11 +49,27 @@ class OpenRouterAgent:
             tool_name = tool_call.function.name
             tool_args = json.loads(tool_call.function.arguments)
             
+            # Notify about tool usage if callback is provided
+            if self.tool_callback:
+                self.tool_callback({
+                    'type': 'tool_start',
+                    'tool_name': tool_name,
+                    'tool_args': tool_args
+                })
+            
             # Call appropriate tool from tool_mapping
             if tool_name in self.tool_mapping:
                 tool_result = self.tool_mapping[tool_name](**tool_args)
             else:
                 tool_result = {"error": f"Unknown tool: {tool_name}"}
+            
+            # Notify about tool completion if callback is provided
+            if self.tool_callback:
+                self.tool_callback({
+                    'type': 'tool_complete',
+                    'tool_name': tool_name,
+                    'tool_result': tool_result
+                })
             
             # Return tool result message
             return {

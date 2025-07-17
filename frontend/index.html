@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenRouter Agent Interface</title>
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+
+<body>
+    <div id="app">
+        <div class="container mx-auto px-4 py-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-6">OpenRouter Agent Interface</h1>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Configuration Panel -->
+                <div class="lg:col-span-1">
+                    <div id="config-panel" class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-semibold mb-4">Configuration</h2>
+                        <div id="config-content"></div>
+                    </div>
+                </div>
+
+                <!-- Chat Interface -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-lg shadow-md" id="chat-interface">
+                        <!-- Chat interface will be rendered here by ChatInterface.ts -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
