@@ -10,6 +10,7 @@ export class ChatInterface {
   private progressContainer: HTMLElement | null = null;
   private orchestrationInProgress = false;
   private allAgentsCompleted = false;
+  private toolMessages: string[] = [];
 
   constructor(containerId: string) {
     const container = document.getElementById(containerId);
@@ -222,7 +223,10 @@ export class ChatInterface {
   private hideProgressContainer() {
     const container = document.getElementById('progress-container');
     if (container) {
-      container.classList.add('hidden');
+      // Ne cacher que si on est en mode orchestrateur ou si aucun outil n'est actif
+      if (this.useOrchestrator) {
+        container.classList.add('hidden');
+      }
       // Nettoyer les barres de progression
       const progressBars = document.getElementById('progress-bars');
       if (progressBars) {
@@ -360,6 +364,7 @@ export class ChatInterface {
 
   private async streamResponse(message: string) {
     this.isStreaming = true;
+    this.toolMessages = []; // Réinitialiser la liste des outils
     
     const assistantMessage: ChatMessage = {
       id: (Date.now() + 1).toString(),
@@ -412,6 +417,8 @@ export class ChatInterface {
             if (this.allAgentsCompleted) {
               this.updateOrchestrationProgress('completed');
             }
+            // Nettoyer les messages d'outil après la réponse finale
+            this.clearToolMessages();
             return;
           }
 
@@ -499,39 +506,55 @@ export class ChatInterface {
   }
 
   private showToolUsage(toolData: any) {
-    const container = document.getElementById('tool-usage-container');
-    const textElement = document.getElementById('tool-usage-text');
-    
-    if (container && textElement) {
-      container.classList.remove('hidden');
+    // Ajouter les événements d'outil comme des messages temporaires
+    if (toolData.event === 'tool_start') {
+      const toolIcon = this.getToolIcon(toolData.tool_name);
+      let message = `${toolIcon} **${toolData.tool_name}**`;
       
-      // Formater le message selon le type d'outil
-      let message = '';
-      if (toolData.event === 'tool_start') {
-        const toolIcon = this.getToolIcon(toolData.tool_name);
-        message = `${toolIcon} Using ${toolData.tool_name}`;
-        
-        // Ajouter des détails spécifiques selon l'outil
-        if (toolData.tool_name === 'search_web' && toolData.query) {
-          message += `: "${toolData.query}"`;
-        } else if (toolData.tool_name === 'calculate' && toolData.expression) {
-          message += `: ${toolData.expression}`;
-        } else if ((toolData.tool_name === 'read_file' || toolData.tool_name === 'write_file') && toolData.filename) {
-          message += `: ${toolData.filename}`;
-        }
-      } else if (toolData.event === 'tool_complete') {
-        message = `✅ ${toolData.tool_name} completed`;
+      // Ajouter des détails spécifiques selon l'outil
+      if (toolData.tool_name === 'search_web' && toolData.query) {
+        message += `: Searching for "${toolData.query}"`;
+      } else if (toolData.tool_name === 'calculate' && toolData.expression) {
+        message += `: ${toolData.expression}`;
+      } else if ((toolData.tool_name === 'read_file' || toolData.tool_name === 'write_file') && toolData.filename) {
+        message += `: ${toolData.filename}`;
+      } else if (toolData.tool_name === 'list_files' && toolData.path) {
+        message += `: Listing files in ${toolData.path}`;
       }
       
-      textElement.textContent = message;
+      const toolMessage: ChatMessage = {
+        id: `tool-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        role: 'assistant',
+        content: message,
+        timestamp: new Date(),
+        isReflection: true
+      };
+      
+      this.toolMessages.push(toolMessage.id);
+      this.addMessage(toolMessage);
     }
   }
 
   private clearToolUsage() {
+    // Cacher le conteneur d'outil temporaire
     const container = document.getElementById('tool-usage-container');
     if (container) {
       container.classList.add('hidden');
     }
+  }
+
+  private clearToolMessages() {
+    // Supprimer tous les messages d'outil temporaires
+    const container = document.getElementById('messages-container');
+    if (container) {
+      this.toolMessages.forEach(toolId => {
+        const toolElement = container.querySelector(`[data-message-id="${toolId}"]`);
+        if (toolElement) {
+          toolElement.remove();
+        }
+      });
+    }
+    this.toolMessages = [];
   }
 
   private getToolIcon(toolName: string): string {
@@ -550,6 +573,7 @@ export class ChatInterface {
     const container = document.getElementById('messages-container');
     if (container) {
       const messageElement = this.createMessageElement(message);
+      messageElement.setAttribute('data-message-id', message.id);
       container.appendChild(messageElement);
       this.scrollToBottom();
     }
@@ -571,10 +595,16 @@ export class ChatInterface {
   private createMessageElement(message: ChatMessage): HTMLElement {
     const div = document.createElement('div');
     div.className = `flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`;
+    div.setAttribute('data-message-id', message.id);
     
-    const contentClass = message.role === 'user' 
+    let contentClass = message.role === 'user' 
       ? 'bg-blue-500 text-white' 
       : 'bg-gray-100 text-gray-800';
+    
+    // Style spécial pour les messages de réflexion
+    if (message.isReflection) {
+      contentClass = 'bg-purple-50 border border-purple-200 text-purple-800 text-sm';
+    }
     
     div.innerHTML = `
       <div class="max-w-xs lg:max-w-md xl:max-w-lg">
@@ -609,6 +639,7 @@ export class ChatInterface {
 
   public clear() {
     this.messages = [];
+    this.toolMessages = [];
     const container = document.getElementById('messages-container');
     if (container) {
       container.innerHTML = `

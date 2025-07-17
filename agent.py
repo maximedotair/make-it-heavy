@@ -89,11 +89,25 @@ class OpenRouterAgent:
     
     def run(self, user_input: str):
         """Run the agent with user input and return FULL conversation content"""
+        # Import datetime for dynamic date injection
+        from datetime import datetime
+        
+        # Get current date in French format
+        current_date = datetime.now().strftime("%d/%m/%Y")
+        
+        # Replace date placeholder in system prompt
+        system_prompt = self.config['system_prompt']
+        if '{current_date}' in system_prompt:
+            system_prompt = system_prompt.replace('{current_date}', current_date)
+        else:
+            # If no placeholder, append date information
+            system_prompt = f"{system_prompt}\n\nCurrent date: {current_date}"
+        
         # Initialize messages with system prompt and user input
         messages = [
             {
                 "role": "system",
-                "content": self.config['system_prompt']
+                "content": system_prompt
             },
             {
                 "role": "user",

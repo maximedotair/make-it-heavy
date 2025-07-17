@@ -53,7 +53,7 @@ def cli_main():
             print(f"Error: {e}")
             print("Please try again or type 'quit' to exit.")
 
-def web_main():
+def web_main(port=8000):
     """Web interface using FastAPI"""
     try:
         from fastapi import FastAPI, HTTPException
@@ -487,9 +487,9 @@ def web_main():
 
     # Start the server
     print("🚀 Starting OpenRouter Agent Web Interface...")
-    print("📱 Web interface available at: http://localhost:8000")
-    print("🔧 API documentation at: http://localhost:8000/docs")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    print(f"📱 Web interface available at: http://localhost:{port}")
+    print("🔧 API documentation at: http://localhost:{port}/docs")
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 def main():
     """Main entry point with CLI argument parsing"""
@@ -500,7 +500,7 @@ def main():
     args = parser.parse_args()
     
     if args.web:
-        web_main()
+        web_main(args.port)
     else:
         cli_main()
 

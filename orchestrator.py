@@ -24,9 +24,13 @@ class TaskOrchestrator:
     
     def decompose_task(self, user_input: str, num_agents: int) -> List[str]:
         """Use AI to dynamically generate different questions based on user input"""
+        from datetime import datetime
         
         # Create question generation agent
         question_agent = OpenRouterAgent(silent=True)
+        
+        # Get current date for prompt injection
+        current_date = datetime.now().strftime("%d/%m/%Y")
         
         # Get question generation prompt from config
         prompt_template = self.config['orchestrator']['question_generation_prompt']
@@ -34,6 +38,9 @@ class TaskOrchestrator:
             user_input=user_input,
             num_agents=num_agents
         )
+        
+        # Inject current date into prompt
+        generation_prompt = generation_prompt.replace('{current_date}', current_date)
         
         # Remove task completion tool to avoid issues
         question_agent.tools = [tool for tool in question_agent.tools if tool.get('function', {}).get('name') != 'mark_task_complete']
@@ -55,10 +62,10 @@ class TaskOrchestrator:
         except (json.JSONDecodeError, ValueError) as e:
             # Fallback: create simple variations if AI fails
             return [
-                f"Research comprehensive information about: {user_input}",
-                f"Analyze and provide insights about: {user_input}",
-                f"Find alternative perspectives on: {user_input}",
-                f"Verify and cross-check facts about: {user_input}"
+                f"Research comprehensive information about: {user_input} (as of {current_date})",
+                f"Analyze and provide insights about: {user_input} (as of {current_date})",
+                f"Find alternative perspectives on: {user_input} (as of {current_date})",
+                f"Verify and cross-check facts about: {user_input} (as of {current_date})"
             ][:num_agents]
     
     def update_agent_progress(self, agent_id: int, status: str, result: str = None):
@@ -124,6 +131,8 @@ class TaskOrchestrator:
         """
         Use one final AI call to synthesize all agent responses into a coherent answer.
         """
+        from datetime import datetime
+        
         if len(responses) == 1:
             return responses[0]
         
@@ -135,12 +144,19 @@ class TaskOrchestrator:
         for i, response in enumerate(responses, 1):
             agent_responses_text += f"=== AGENT {i} RESPONSE ===\n{response}\n\n"
         
+        # Get current date for prompt injection
+        current_date = datetime.now().strftime("%d/%m/%Y")
+        
         # Get synthesis prompt from config and format it
         synthesis_prompt_template = self.config['orchestrator']['synthesis_prompt']
         synthesis_prompt = synthesis_prompt_template.format(
             num_responses=len(responses),
-            agent_responses=agent_responses_text
+            agent_responses=agent_responses_text,
+            current_date=current_date
         )
+        
+        # Inject current date into prompt
+        synthesis_prompt = synthesis_prompt.replace('{current_date}', current_date)
         
         # Completely remove all tools from synthesis agent to force direct response
         synthesis_agent.tools = []
