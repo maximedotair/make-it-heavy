@@ -248,9 +248,25 @@ def web_main():
                             elif 'path' in tool_args:
                                 tool_info += f" (file: {tool_args['path']})"
                             
+                            # Convertir la structure pour correspondre à l'attente du frontend
+                            tool_event = {
+                                'event': 'tool_start',
+                                'tool_name': event.get('tool_name', 'unknown'),
+                                'tool_args': event.get('tool_args', {})
+                            }
+                            
+                            # Extraire les arguments spécifiques pour l'affichage
+                            tool_args = event.get('tool_args', {})
+                            if 'query' in tool_args:
+                                tool_event['query'] = tool_args['query']
+                            elif 'expression' in tool_args:
+                                tool_event['expression'] = tool_args['expression']
+                            elif 'path' in tool_args:
+                                tool_event['filename'] = tool_args['path']
+                            
                             tool_data = {
                                 'type': 'tool_usage',
-                                'data': event
+                                'data': tool_event
                             }
                             yield f"data: {json.dumps(tool_data)}\n\n"
                             logger.info(f"🚀 Streamed tool_usage event: {event.get('tool_name')}")
@@ -387,7 +403,23 @@ def web_main():
                             elif 'path' in tool_args:
                                 tool_info += f" (file: {tool_args['path']})"
                             
-                            yield f"data: {json.dumps({'type': 'tool_usage', 'data': event})}\n\n"
+                            # Convertir la structure pour correspondre à l'attente du frontend
+                            tool_event = {
+                                'event': 'tool_start',
+                                'tool_name': event.get('tool_name', 'unknown'),
+                                'tool_args': event.get('tool_args', {})
+                            }
+                            
+                            # Extraire les arguments spécifiques pour l'affichage
+                            tool_args = event.get('tool_args', {})
+                            if 'query' in tool_args:
+                                tool_event['query'] = tool_args['query']
+                            elif 'expression' in tool_args:
+                                tool_event['expression'] = tool_args['expression']
+                            elif 'path' in tool_args:
+                                tool_event['filename'] = tool_args['path']
+                            
+                            yield f"data: {json.dumps({'type': 'tool_usage', 'data': tool_event})}\n\n"
                             logger.info(f"🔧 Orchestrator tool used: {event.get('tool_name')} with args: {tool_args}")
                         elif event.get('type') == 'tool_complete':
                             yield f"data: {json.dumps({'type': 'clear_tool_usage'})}\n\n"

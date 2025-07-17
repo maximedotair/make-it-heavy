@@ -509,18 +509,18 @@ export class ChatInterface {
       let message = '';
       if (toolData.event === 'tool_start') {
         const toolIcon = this.getToolIcon(toolData.tool_name);
-        message = `${toolIcon} Utilisation de ${toolData.tool_name}`;
+        message = `${toolIcon} Using ${toolData.tool_name}`;
         
         // Ajouter des détails spécifiques selon l'outil
         if (toolData.tool_name === 'search_web' && toolData.query) {
-          message += ` : "${toolData.query}"`;
+          message += `: "${toolData.query}"`;
         } else if (toolData.tool_name === 'calculate' && toolData.expression) {
-          message += ` : ${toolData.expression}`;
+          message += `: ${toolData.expression}`;
         } else if ((toolData.tool_name === 'read_file' || toolData.tool_name === 'write_file') && toolData.filename) {
-          message += ` : ${toolData.filename}`;
+          message += `: ${toolData.filename}`;
         }
       } else if (toolData.event === 'tool_complete') {
-        message = `✅ ${toolData.tool_name} terminé`;
+        message = `✅ ${toolData.tool_name} completed`;
       }
       
       textElement.textContent = message;
