@@ -1,12 +1,13 @@
 # OpenRouter API settings
 openrouter:
-  api_key: "YOUR KEY"
+  api_key: "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"
   base_url: "https://openrouter.ai/api/v1"
   
   # IMPORTANT: When selecting a model, ensure it has a high context window (200k+ tokens recommended)
   # The orchestrator can generate large amounts of results from multiple agents that need to be
   # processed together during synthesis. Low context window models may fail or truncate results.
   model: "moonshotai/kimi-k2"
+  #model: "anthropic/claude-sonnet-4"
 
 # System prompt for the agent
 system_prompt: |
@@ -16,7 +17,7 @@ system_prompt: |
   
   IMPORTANT: When you have fully satisfied the user's request and provided a complete answer, 
   you MUST call the mark_task_complete tool with a summary of what was accomplished and 
-  a final message for the user. This signals that the task is finished.
+  a final message for the user. This signals that the task is finished. Current date: {current_date}
 
 # Agent settings
 agent:

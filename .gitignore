@@ -24,6 +24,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+config.yaml
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -239,3 +240,4 @@ $RECYCLE.BIN/
 # data/
 # output/
 # results/ 
+config.yaml
